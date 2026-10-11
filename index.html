@@ -90,6 +90,37 @@ function solvedOrigin(row, col) { return { x: col * CELL_W, y: row * CELL_H }; }
 function setTransform(el, x, y) { el.dataset.x = x; el.dataset.y = y; el.setAttribute('transform', `translate(${x} ${y})`); }
 function groupOffset(group) { return { x: Number(group.cluster.dataset.x || 0), y: Number(group.cluster.dataset.y || 0) }; }
 
+// Return the full local footprint of a cluster, including each piece's tabs.
+// Keeping this derived from the member origins means it also works after pieces
+// have been merged into a larger connected group.
+function groupBounds(group) {
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  group.members.forEach((id) => {
+    const piece = pieces[id];
+    if (!piece) return;
+    minX = Math.min(minX, piece.origin.x - TAB);
+    minY = Math.min(minY, piece.origin.y - TAB);
+    maxX = Math.max(maxX, piece.origin.x + CELL_W + TAB);
+    maxY = Math.max(maxY, piece.origin.y + CELL_H + TAB);
+  });
+  return { minX, minY, maxX, maxY };
+}
+
+// Keep the whole cluster inside the SVG's visible viewBox. The viewBox has a
+// TAB-sized gutter so edge pieces can sit at their solved positions (offset 0)
+// while still showing their outer tabs.
+function clampGroupPosition(group, x, y) {
+  const bounds = groupBounds(group);
+  const minX = -TAB - bounds.minX;
+  const maxX = WORLD_WIDTH + TAB - bounds.maxX;
+  const minY = -TAB - bounds.minY;
+  const maxY = WORLD_HEIGHT + TAB - bounds.maxY;
+  return {
+    x: Math.min(maxX, Math.max(minX, x)),
+    y: Math.min(maxY, Math.max(minY, y)),
+  };
+}
+
 function createPuzzle() {
   clearInterval(timerId);
   startedAt = null;
@@ -261,7 +292,8 @@ function beginDrag(event) {
 function moveDrag(event) {
   if (!drag) return;
   const point = svgPoint(event);
-  const x = point.x - drag.dx, y = point.y - drag.dy;
+  const rawX = point.x - drag.dx, rawY = point.y - drag.dy;
+  const { x, y } = clampGroupPosition(drag.group, rawX, rawY);
   applyGroupPosition(drag.group, x, y);
   const ready = findSnap(drag.group, x, y);
   drag.group.cluster.classList.toggle('snap-hint', Boolean(ready));
@@ -280,8 +312,11 @@ function endDrag(event) {
 function shuffle(includeLocked = false) {
   groups.forEach((group) => {
     if (group.locked && !includeLocked) return;
-    const x = TAB + Math.random() * Math.max(0, WORLD_WIDTH - CELL_W - TAB * 2);
-    const y = TAB + Math.random() * Math.max(0, WORLD_HEIGHT - CELL_H - TAB * 2);
+    const bounds = groupBounds(group);
+    const minX = -TAB - bounds.minX, maxX = WORLD_WIDTH + TAB - bounds.maxX;
+    const minY = -TAB - bounds.minY, maxY = WORLD_HEIGHT + TAB - bounds.maxY;
+    const x = minX + Math.random() * Math.max(0, maxX - minX);
+    const y = minY + Math.random() * Math.max(0, maxY - minY);
     applyGroupPosition(group, x, y);
   });
 }
