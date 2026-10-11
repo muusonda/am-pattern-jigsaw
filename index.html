@@ -48,6 +48,8 @@ let vEdges = [];
 let lockedCount = 0;
 let startedAt = null;
 let timerId = null;
+let trayX = 260;
+let trayY = 0;
 
 const svgEl = (tag, attrs = {}) => {
   const el = document.createElementNS(NS, tag);
@@ -89,6 +91,14 @@ function pieceId(row, col) { return row * COLS + col; }
 function solvedOrigin(row, col) { return { x: col * CELL_W, y: row * CELL_H }; }
 function setTransform(el, x, y) { el.dataset.x = x; el.dataset.y = y; el.setAttribute('transform', `translate(${x} ${y})`); }
 function groupOffset(group) { return { x: Number(group.cluster.dataset.x || 0), y: Number(group.cluster.dataset.y || 0) }; }
+
+function workspaceMargins() {
+  return window.innerWidth < 700 ? { x: 0, y: 260 } : { x: 260, y: 0 };
+}
+
+function workspaceViewBox() {
+  return `${-trayX} ${-trayY} ${WORLD_WIDTH + trayX * 2} ${WORLD_HEIGHT + trayY * 2}`;
+}
 
 // Return the full local footprint of a cluster, including each piece's tabs.
 // Keeping this derived from the member origins means it also works after pieces
@@ -138,15 +148,14 @@ function shuffleArray(items) {
   return items;
 }
 
-// Keep the whole cluster inside the SVG's visible viewBox. The viewBox has a
-// TAB-sized gutter so edge pieces can sit at their solved positions (offset 0)
-// while still showing their outer tabs.
+// Keep the whole cluster inside the SVG's visible viewBox, including the
+// responsive piece tray around the puzzle area.
 function clampGroupPosition(group, x, y) {
   const bounds = groupBounds(group);
-  const minX = -TAB - bounds.minX;
-  const maxX = WORLD_WIDTH + TAB - bounds.maxX;
-  const minY = -TAB - bounds.minY;
-  const maxY = WORLD_HEIGHT + TAB - bounds.maxY;
+  const minX = -trayX - bounds.minX;
+  const maxX = WORLD_WIDTH + trayX - bounds.maxX;
+  const minY = -trayY - bounds.minY;
+  const maxY = WORLD_HEIGHT + trayY - bounds.maxY;
   return {
     x: Math.min(maxX, Math.max(minX, x)),
     y: Math.min(maxY, Math.max(minY, y)),
@@ -162,8 +171,9 @@ function createPuzzle() {
   groupByPiece = new Map();
   drag = null;
   makeEdges();
+  ({ x: trayX, y: trayY } = workspaceMargins());
   board.innerHTML = '';
-  svg = svgEl('svg', { id: 'puzzleSvg', viewBox: `${-TAB} ${-TAB} ${WORLD_WIDTH + TAB * 2} ${WORLD_HEIGHT + TAB * 2}`, preserveAspectRatio: 'none' });
+  svg = svgEl('svg', { id: 'puzzleSvg', viewBox: workspaceViewBox(), preserveAspectRatio: 'none' });
   const defs = svgEl('defs');
   svg.appendChild(defs);
 
@@ -342,9 +352,15 @@ function endDrag(event) {
 }
 
 function shuffle(includeLocked = false) {
-  const slots = shuffleArray(Array.from({ length: TOTAL }, (_, index) => ({
-    x: (index % COLS) * CELL_W,
-    y: Math.floor(index / COLS) * CELL_H,
+  const slotCols = trayX > 0 ? COLS + 2 : COLS;
+  const slotRows = trayY > 0 ? ROWS + 3 : ROWS;
+  const slotWidth = WORLD_WIDTH + trayX * 2;
+  const slotHeight = WORLD_HEIGHT + trayY * 2;
+  const stepX = slotCols > 1 ? (slotWidth - CELL_W) / (slotCols - 1) : 0;
+  const stepY = slotRows > 1 ? (slotHeight - CELL_H) / (slotRows - 1) : 0;
+  const slots = shuffleArray(Array.from({ length: slotCols * slotRows }, (_, index) => ({
+    x: -trayX + (index % slotCols) * stepX,
+    y: -trayY + Math.floor(index / slotCols) * stepY,
   })));
   const movable = groups.filter((group) => includeLocked || !group.locked).sort((a, b) => b.members.size - a.members.size);
   const placed = groups.filter((group) => group.locked && !includeLocked).map((group) => groupCoreRect(group, group.x, group.y));
@@ -369,11 +385,24 @@ function shuffle(includeLocked = false) {
 }
 
 function resizeBoard() {
-  const maxWidth = Math.min(window.innerWidth * 0.86, 620);
+  const nextMargins = workspaceMargins();
+  const marginsChanged = nextMargins.x !== trayX || nextMargins.y !== trayY;
+  trayX = nextMargins.x;
+  trayY = nextMargins.y;
+  const viewWidth = WORLD_WIDTH + trayX * 2;
+  const viewHeight = WORLD_HEIGHT + trayY * 2;
+  if (svg) svg.setAttribute('viewBox', workspaceViewBox());
+  const maxWidth = Math.min(window.innerWidth * 0.94, 1100);
   const maxHeight = window.innerHeight * 0.92;
-  const width = Math.min(maxWidth, maxHeight * IMAGE_WIDTH / IMAGE_HEIGHT);
+  const width = Math.min(maxWidth, maxHeight * viewWidth / viewHeight);
   board.style.width = `${width}px`;
-  board.style.height = `${width * IMAGE_HEIGHT / IMAGE_WIDTH}px`;
+  board.style.height = `${width * viewHeight / viewWidth}px`;
+  if (marginsChanged && groups.length) {
+    groups.forEach((group) => {
+      const position = clampGroupPosition(group, group.x, group.y);
+      applyGroupPosition(group, position.x, position.y);
+    });
+  }
 }
 
 document.getElementById('newPuzzle').onclick = createPuzzle;
