@@ -4,9 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>AM Pattern 1</title>
-  <style>
-*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden}body{background:#120d32;font-family:system-ui,sans-serif}.game-shell{width:100%;height:100%;display:grid;place-items:center;position:relative}.board{position:relative;background:#120d32;overflow:visible;touch-action:none;filter:drop-shadow(0 24px 70px rgba(0,0,0,.42))}.board:after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(115deg,rgba(255,255,255,.05),transparent 35%,rgba(0,0,0,.12))}#puzzleSvg{position:absolute;inset:0;width:100%;height:100%;overflow:visible;display:block}.ghost-image{opacity:0;transition:opacity .25s;pointer-events:none}.ghost-on .ghost-image{opacity:.2}.slot{fill:rgba(255,255,255,.018);stroke:rgba(255,255,255,.15);stroke-width:1.1;stroke-dasharray:5 8;pointer-events:none}.cluster{isolation:isolate;cursor:grab;transition:filter .18s}.cluster.dragging{cursor:grabbing;filter:drop-shadow(0 14px 12px rgba(0,0,0,.5))}.piece{pointer-events:visiblePainted}.piece image{pointer-events:visiblePainted}.piece-outline{fill:none;stroke:rgba(255,255,255,.32);stroke-width:1.4;vector-effect:non-scaling-stroke;pointer-events:none}.cluster.snap-hint .piece-outline{stroke:#f4df84;stroke-width:2.6;filter:drop-shadow(0 0 6px rgba(244,223,132,.6))}.cluster.locked{cursor:default;filter:drop-shadow(0 0 4px rgba(255,255,255,.13))}.cluster.locked .piece-outline{stroke:rgba(255,255,255,.18)}.floating-controls{position:fixed;right:20px;bottom:20px;display:flex;gap:8px;z-index:20}.round-control{width:35px;height:35px;border:1px solid rgba(255,255,255,.3);border-radius:50%;background:rgba(18,13,50,.72);backdrop-filter:blur(8px);color:rgba(255,255,255,.9);font-size:17px;line-height:1;cursor:pointer}.round-control:hover{background:rgba(255,255,255,.16)}.modal{position:fixed;inset:0;display:none;place-items:center;padding:20px;background:rgba(18,13,50,.82);z-index:30}.modal.open{display:grid}.modal-card{position:relative;max-width:90vw;max-height:90vh;background:#120d32;padding:8px}.modal-card img{display:block;max-width:calc(90vw - 16px);max-height:calc(90vh - 16px);width:auto;height:auto}.modal-close{position:absolute;right:5px;top:5px;width:30px;height:30px;border:0;border-radius:50%;background:#f5f2ed;color:#120d32;font-size:21px;line-height:1;cursor:pointer}.win-toast{position:fixed;left:50%;bottom:20px;transform:translate(-50%,110px);opacity:0;transition:.4s;z-index:40}.win-toast.show{transform:translate(-50%,0);opacity:1}.win-toast button{width:38px;height:38px;border:1px solid rgba(255,255,255,.4);border-radius:50%;background:#17132c;color:#fff;font-size:21px;cursor:pointer}#timer,#progressText,#progressFill,#statusText,#finalTime{display:none}@media(max-width:600px){.floating-controls{right:12px;bottom:12px;gap:6px}.round-control{width:32px;height:32px}}
-
+  <style>*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden}body{background:#120d32;font-family:system-ui,sans-serif}.game-shell{width:100%;height:100%;display:grid;place-items:center;position:relative}.board{position:relative;background:#120d32;overflow:visible;touch-action:none;filter:drop-shadow(0 24px 70px rgba(0,0,0,.42))}.board:after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(115deg,rgba(255,255,255,.05),transparent 35%,rgba(0,0,0,.12))}#puzzleSvg{position:absolute;inset:0;width:100%;height:100%;overflow:visible;display:block}.ghost-image{opacity:0;transition:opacity .25s;pointer-events:none}.ghost-on .ghost-image{opacity:.2}.slot{fill:rgba(255,255,255,.018);stroke:rgba(255,255,255,.15);stroke-width:1.1;stroke-dasharray:5 8;pointer-events:none}.cluster{isolation:isolate;cursor:grab;transition:none}.cluster.dragging{cursor:grabbing;filter:none;opacity:.94}.piece{pointer-events:visiblePainted}.piece image{pointer-events:visiblePainted}.piece-outline{fill:none;stroke:rgba(255,255,255,.32);stroke-width:1.4;vector-effect:non-scaling-stroke;pointer-events:none}.cluster.snap-hint .piece-outline{stroke:#f4df84;stroke-width:2.6;filter:drop-shadow(0 0 6px rgba(244,223,132,.6))}.cluster.locked{cursor:default;filter:drop-shadow(0 0 4px rgba(255,255,255,.13))}.cluster.locked .piece-outline{stroke:rgba(255,255,255,.18)}.floating-controls{position:fixed;right:20px;bottom:20px;display:flex;gap:8px;z-index:20}.round-control{width:35px;height:35px;border:1px solid rgba(255,255,255,.3);border-radius:50%;background:rgba(18,13,50,.72);backdrop-filter:blur(8px);color:rgba(255,255,255,.9);font-size:17px;line-height:1;cursor:pointer}.round-control:hover{background:rgba(255,255,255,.16)}.modal{position:fixed;inset:0;display:none;place-items:center;padding:20px;background:rgba(18,13,50,.82);z-index:30}.modal.open{display:grid}.modal-card{position:relative;max-width:90vw;max-height:90vh;background:#120d32;padding:8px}.modal-card img{display:block;max-width:calc(90vw - 16px);max-height:calc(90vh - 16px);width:auto;height:auto}.modal-close{position:absolute;right:5px;top:5px;width:30px;height:30px;border:0;border-radius:50%;background:#f5f2ed;color:#120d32;font-size:21px;line-height:1;cursor:pointer}.win-toast{position:fixed;left:50%;bottom:20px;transform:translate(-50%,110px);opacity:0;transition:.4s;z-index:40}.win-toast.show{transform:translate(-50%,0);opacity:1}.win-toast button{width:38px;height:38px;border:1px solid rgba(255,255,255,.4);border-radius:50%;background:#17132c;color:#fff;font-size:21px;cursor:pointer}#timer,#progressText,#progressFill,#statusText,#finalTime{display:none}@media(max-width:600px){.floating-controls{right:12px;bottom:12px;gap:6px}.round-control{width:32px;height:32px}}
 </style>
 </head>
 <body>
@@ -16,6 +14,7 @@
       <button class="round-control" id="showImage" aria-label="Show reference image">◉</button>
       <button class="round-control" id="ghostBtn" aria-label="Toggle ghost image">◌</button>
       <button class="round-control" id="shuffleBtn" aria-label="Shuffle pieces">↻</button>
+      <button class="round-control" id="separateBtn" aria-label="Separate connected pieces">✂</button>
       <button class="round-control" id="newPuzzle" aria-label="New puzzle">＋</button>
       <button class="round-control" id="fullscreenBtn" aria-label="Fullscreen">↗</button>
     </div>
@@ -23,8 +22,7 @@
     <div id="winToast" class="win-toast" aria-hidden="true"><span class="win-spark">✳</span><button id="playAgain" aria-label="Play again">↻</button></div>
     <span id="timer" hidden>00:00</span><span id="progressText" hidden>0 / 96 placed</span><span id="progressFill" hidden></span><span id="statusText" hidden></span><span id="finalTime" hidden>00:00</span>
   </main>
-  <script>
-const board = document.getElementById('board');
+  <script>const board = document.getElementById('board');
 const NS = 'http://www.w3.org/2000/svg';
 const COLS = 8;
 const ROWS = 12;
@@ -151,7 +149,9 @@ function shuffleArray(items) {
 // Keep the whole cluster inside the SVG's visible viewBox, including the
 // responsive piece tray around the puzzle area.
 function clampGroupPosition(group, x, y) {
-  const bounds = groupBounds(group);
+  // Keep the piece body flush with the workspace edge. Including tab bounds
+  // here left a visible gap when a piece was dragged to an outer edge.
+  const bounds = groupCoreBounds(group);
   const minX = -trayX - bounds.minX;
   const maxX = WORLD_WIDTH + trayX - bounds.maxX;
   const minY = -trayY - bounds.minY;
@@ -214,11 +214,11 @@ function createPuzzle() {
   resizeBoard();
 }
 
-function svgPoint(event) {
+function svgPoint(event, inverseMatrix = null) {
   const point = svg.createSVGPoint();
   point.x = event.clientX;
   point.y = event.clientY;
-  return point.matrixTransform(svg.getScreenCTM().inverse());
+  return point.matrixTransform(inverseMatrix || svg.getScreenCTM().inverse());
 }
 
 function updateProgress() {
@@ -285,6 +285,28 @@ function mergeGroups(a, b) {
   return target;
 }
 
+function splitGroup(group) {
+  if (!group || group.locked || group.members.size < 2) return;
+  const ids = [...group.members];
+  ids.slice(1).forEach((id) => {
+    const piece = pieces[id];
+    if (!piece) return;
+    const cluster = svgEl('g', { class: 'cluster' });
+    cluster.appendChild(piece.element);
+    svg.appendChild(cluster);
+    const nextGroup = { id: `group-${id}-${Date.now()}`, members: new Set([id]), cluster, x: group.x, y: group.y, locked: false };
+    setTransform(cluster, group.x, group.y);
+    groups.push(nextGroup);
+    groupByPiece.set(id, nextGroup);
+    piece.group = nextGroup;
+    group.members.delete(id);
+  });
+}
+
+function separateUnlockedGroups() {
+  groups.slice().forEach(splitGroup);
+}
+
 function lockGroup(group) {
   if (group.locked) return;
   group.locked = true;
@@ -323,7 +345,7 @@ function beginDrag(event) {
   bringToFront(group);
   const point = svgPoint(event);
   const offset = groupOffset(group);
-  drag = { group, dx: point.x - offset.x, dy: point.y - offset.y };
+  drag = { group, dx: point.x - offset.x, dy: point.y - offset.y, inverseCTM: svg.getScreenCTM().inverse(), frame: 0, latest: null };
   group.cluster.classList.add('dragging');
   event.currentTarget.setPointerCapture(event.pointerId);
   event.currentTarget.addEventListener('pointermove', moveDrag);
@@ -331,9 +353,9 @@ function beginDrag(event) {
   event.currentTarget.addEventListener('pointercancel', endDrag, { once: true });
 }
 
-function moveDrag(event) {
+function applyDragPoint(clientX, clientY) {
   if (!drag) return;
-  const point = svgPoint(event);
+  const point = svgPoint({ clientX, clientY }, drag.inverseCTM);
   const rawX = point.x - drag.dx, rawY = point.y - drag.dy;
   const { x, y } = clampGroupPosition(drag.group, rawX, rawY);
   applyGroupPosition(drag.group, x, y);
@@ -342,8 +364,21 @@ function moveDrag(event) {
   if (ready) drag.group.cluster.dataset.snapX = ready.x;
 }
 
+function moveDrag(event) {
+  if (!drag) return;
+  drag.latest = { clientX: event.clientX, clientY: event.clientY };
+  if (drag.frame) return;
+  drag.frame = requestAnimationFrame(() => {
+    drag.frame = 0;
+    if (drag.latest) applyDragPoint(drag.latest.clientX, drag.latest.clientY);
+  });
+}
+
 function endDrag(event) {
   if (!drag) return;
+  if (drag.frame) cancelAnimationFrame(drag.frame);
+  drag.frame = 0;
+  applyDragPoint(event.clientX, event.clientY);
   const group = drag.group;
   group.cluster.classList.remove('dragging', 'snap-hint');
   event.currentTarget.removeEventListener('pointermove', moveDrag);
@@ -407,6 +442,7 @@ function resizeBoard() {
 
 document.getElementById('newPuzzle').onclick = createPuzzle;
 document.getElementById('shuffleBtn').onclick = () => shuffle(false);
+document.getElementById('separateBtn').onclick = separateUnlockedGroups;
 document.getElementById('playAgain').onclick = createPuzzle;
 document.getElementById('showImage').onclick = () => document.getElementById('imageModal').classList.add('open');
 document.getElementById('closeModal').onclick = () => document.getElementById('imageModal').classList.remove('open');
@@ -417,7 +453,6 @@ window.addEventListener('resize', resizeBoard);
 document.addEventListener('keydown', (event) => { if (event.key.toLowerCase() === 'i') document.getElementById('imageModal').classList.add('open'); if (event.key.toLowerCase() === 'g') board.classList.toggle('ghost-on'); if (event.key === 'Escape') document.getElementById('imageModal').classList.remove('open'); });
 
 createPuzzle();
-
 </script>
 </body>
 </html>
