@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Abdullah Ibrahim Puzzle</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body data-artwork="abdullah">
+  <main class="game-shell">
+    <div id="board" class="board" aria-current="page" aria-label="Jigsaw puzzle board"></div>
+    <div class="art-picker" aria-label="Choose artwork">
+      <a class="art-option" data-artwork="abdullah" href="abdullah.html" aria-label="Abdullah Ibrahim"><img src="public/artworks/abdullah-ibrahim.jpg" alt="" draggable="false" /></a>
+      <a class="art-option" data-artwork="bra-hugh" href="bra-hugh.html" aria-label="Bra Hugh"><img src="public/artworks/bra-hugh.jpg" alt="" draggable="false" /></a>
+      <a class="art-option" data-artwork="mr-flavour" href="mr-flavour.html" aria-label="Mr Flavour"><img src="public/artworks/mr-flavour.jpg" alt="" draggable="false" /></a>
+      <a class="art-option" data-artwork="tems" href="tems.html" aria-label="Tems"><img src="public/artworks/tems.jpg" alt="" draggable="false" /></a>
+      <a class="art-option" data-artwork="thandiswa" href="thandiswa-mazwai.html" aria-label="Thandiswa Mazwai"><img src="public/artworks/thandiswa-mazwai.jpg" alt="" draggable="false" /></a>
+      <a class="art-option" data-artwork="tyla" href="tyla.html" aria-label="Tyla"><img src="public/artworks/tyla.jpg" alt="" draggable="false" /></a>
+    </div>
+    <div class="floating-controls" aria-label="Puzzle controls">
+      <button type="button" class="round-control" id="showImage" aria-label="Show reference image">
+        <svg class="control-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8" cy="9" r="1.5"/><path d="m4 17 5-5 3 3 2-2 6 6"/></svg>
+      </button>
+      <button type="button" class="round-control" id="ghostBtn" aria-label="Toggle ghost image">
+        <svg class="control-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12c2.4-5 5-7 8-7s5.6 2 8 7c-2.4 5-5 7-8 7s-5.6-2-8-7Z"/><circle cx="12" cy="12" r="2.5"/></svg>
+      </button>
+      <button type="button" class="round-control" id="shuffleBtn" aria-label="Shuffle pieces">
+        <svg class="control-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h3c4 0 5 10 10 10h3"/><path d="m17 14 3 3-3 3"/><path d="M4 17h3c1.7 0 2.8-1.6 3.7-3.4M14.2 10.4C15.1 8.8 16.2 7 18 7h2"/><path d="m17 4 3 3-3 3"/></svg>
+      </button>
+      <button type="button" class="round-control" id="separateBtn" aria-label="Separate connected pieces">
+        <svg class="control-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><circle cx="12" cy="12" r="1.4"/><path d="M8.12 8.12 12 12 20 4"/><path d="M8.12 15.88 12 12 20 20"/></svg>
+      </button>
+      <button type="button" class="round-control" id="fullscreenBtn" aria-label="Fullscreen">
+        <svg class="control-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4H4v4M16 4h4v4M20 16v4h-4M4 16v4h4"/></svg>
+      </button>
+    </div>
+    <div id="imageModal" class="modal" aria-hidden="true"><div class="modal-card"><button type="button" class="modal-close" id="closeModal" aria-label="Close"><svg class="control-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button><img src="public/artworks/abdullah-ibrahim.jpg" alt="Abdullah Ibrahim artwork"/></div></div>
+    <div id="winToast" class="win-toast" aria-hidden="true"><span class="win-spark" aria-hidden="true"></span><button type="button" id="playAgain" aria-label="Play again"><svg class="control-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0 1 4"/><path d="M20 5v6h-6"/></svg></button></div>
+    <span id="timer" hidden>00:00</span><span id="progressText" hidden>0 / 96 placed</span><span id="progressFill" hidden></span><span id="statusText" hidden></span><span id="finalTime" hidden>00:00</span>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>
