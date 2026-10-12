@@ -4,12 +4,12 @@ const COLS = 8;
 const ROWS = 12;
 const TOTAL = COLS * ROWS;
 const ARTWORKS = [
-  { id: 'abdullah', label: 'Abdullah Ibrahim', page: 'abdullah.html', src: 'public/artworks/abdullah-ibrahim.jpg', width: 1049, height: 1400 },
-  { id: 'bra-hugh', label: 'Bra Hugh', page: 'bra-hugh.html', src: 'public/artworks/bra-hugh.jpg', width: 1053, height: 1400 },
-  { id: 'mr-flavour', label: 'Mr Flavour', page: 'mr-flavour.html', src: 'public/artworks/mr-flavour.jpg', width: 1049, height: 1400 },
-  { id: 'tems', label: 'Tems', page: 'tems.html', src: 'public/artworks/tems.jpg', width: 1049, height: 1400 },
-  { id: 'thandiswa', label: 'Thandiswa Mazwai', page: 'thandiswa-mazwai.html', src: 'public/artworks/thandiswa-mazwai.jpg', width: 1049, height: 1400 },
-  { id: 'tyla', label: 'Tyla', page: 'tyla.html', src: 'public/artworks/tyla.jpg', width: 1049, height: 1400 },
+  { id: 'abdullah', label: 'Abdullah Ibrahim', page: 'abdullah.html', src: 'abdullah-ibrahim.jpg', width: 1049, height: 1400 },
+  { id: 'bra-hugh', label: 'Bra Hugh', page: 'bra-hugh.html', src: 'bra-hugh.jpg', width: 1053, height: 1400 },
+  { id: 'mr-flavour', label: 'Mr Flavour', page: 'mr-flavour.html', src: 'mr-flavour.jpg', width: 1049, height: 1400 },
+  { id: 'tems', label: 'Tems', page: 'tems.html', src: 'tems.jpg', width: 1049, height: 1400 },
+  { id: 'thandiswa', label: 'Thandiswa Mazwai', page: 'thandiswa-mazwai.html', src: 'thandiswa-mazwai.jpg', width: 1049, height: 1400 },
+  { id: 'tyla', label: 'Tyla', page: 'tyla.html', src: 'tyla.jpg', width: 1049, height: 1400 },
 ];
 const pageArtworkId = document.body.dataset.artwork || new URLSearchParams(window.location.search).get('artwork') || 'abdullah';
 let currentArtwork = ARTWORKS.find((item) => item.id === pageArtworkId) || ARTWORKS[0];
