@@ -23,9 +23,6 @@
       <button type="button" class="round-control" id="separateBtn" aria-label="Separate connected pieces">
         <svg class="control-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><circle cx="12" cy="12" r="1.4"/><path d="M8.12 8.12 12 12 20 4"/><path d="M8.12 15.88 12 12 20 20"/></svg>
       </button>
-      <button type="button" class="round-control" id="newPuzzle" aria-label="New puzzle">
-        <svg class="control-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
-      </button>
       <button type="button" class="round-control" id="fullscreenBtn" aria-label="Fullscreen">
         <svg class="control-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4H4v4M16 4h4v4M20 16v4h-4M4 16v4h4"/></svg>
       </button>
@@ -454,7 +451,6 @@ function resizeBoard() {
   }
 }
 
-document.getElementById('newPuzzle').onclick = createPuzzle;
 document.getElementById('shuffleBtn').onclick = () => shuffle(false);
 document.getElementById('separateBtn').onclick = separateUnlockedGroups;
 document.getElementById('playAgain').onclick = createPuzzle;
