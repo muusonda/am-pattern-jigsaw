@@ -4,12 +4,12 @@ const COLS = 8;
 const ROWS = 12;
 const TOTAL = COLS * ROWS;
 const ARTWORKS = [
-  { id: 'abdullah', label: 'Abdullah Ibrahim', page: 'abdullah.html', src: 'abdullah-ibrahim.jpg', width: 1049, height: 1400 },
-  { id: 'bra-hugh', label: 'Bra Hugh', page: 'bra-hugh.html', src: 'bra-hugh.jpg', width: 1053, height: 1400 },
-  { id: 'mr-flavour', label: 'Mr Flavour', page: 'mr-flavour.html', src: 'mr-flavour.jpg', width: 1049, height: 1400 },
-  { id: 'tems', label: 'Tems', page: 'tems.html', src: 'tems.jpg', width: 1049, height: 1400 },
-  { id: 'thandiswa', label: 'Thandiswa Mazwai', page: 'thandiswa-mazwai.html', src: 'thandiswa-mazwai.jpg', width: 1049, height: 1400 },
-  { id: 'tyla', label: 'Tyla', page: 'tyla.html', src: 'tyla.jpg', width: 1049, height: 1400 },
+  { id: 'abdullah', label: 'Abdullah Ibrahim', page: 'abdullah.html?v=artwork-pages-3', src: 'abdullah-ibrahim.jpg', width: 1049, height: 1400 },
+  { id: 'bra-hugh', label: 'Bra Hugh', page: 'bra-hugh.html?v=artwork-pages-3', src: 'bra-hugh.jpg', width: 1053, height: 1400 },
+  { id: 'mr-flavour', label: 'Mr Flavour', page: 'mr-flavour.html?v=artwork-pages-3', src: 'mr-flavour.jpg', width: 1049, height: 1400 },
+  { id: 'tems', label: 'Tems', page: 'tems.html?v=artwork-pages-3', src: 'tems.jpg', width: 1049, height: 1400 },
+  { id: 'thandiswa', label: 'Thandiswa Mazwai', page: 'thandiswa-mazwai.html?v=artwork-pages-3', src: 'thandiswa-mazwai.jpg', width: 1049, height: 1400 },
+  { id: 'tyla', label: 'Tyla', page: 'tyla.html?v=artwork-pages-3', src: 'tyla.jpg', width: 1049, height: 1400 },
 ];
 const pageArtworkId = document.body.dataset.artwork || new URLSearchParams(window.location.search).get('artwork') || 'abdullah';
 let currentArtwork = ARTWORKS.find((item) => item.id === pageArtworkId) || ARTWORKS[0];
@@ -146,6 +146,9 @@ function clampGroupPosition(group, x, y) {
   };
 }
 
+
+// Remove any legacy artwork picker markup that may still be present in a cached page.
+document.querySelectorAll('.art-picker').forEach((picker) => picker.remove());
 
 function syncArtworkPicker() {
   document.querySelectorAll('.art-option').forEach((link) => {
