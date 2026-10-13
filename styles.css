@@ -7,3 +7,9 @@
 .board{min-width:0;min-height:0}
 .floating-controls{position:absolute}
 .cluster.locked .piece,.cluster.locked image{pointer-events:none}
+
+/* Keep drag and flick frames light, then ease the short final snap. */
+.cluster{will-change:transform}
+.cluster.dragging{opacity:.97}
+.cluster.flicking{opacity:.98;filter:none}
+.cluster.settling{cursor:default;pointer-events:none;opacity:.98}

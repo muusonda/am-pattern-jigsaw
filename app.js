@@ -4,12 +4,12 @@ const COLS = 8;
 const ROWS = 12;
 const TOTAL = COLS * ROWS;
 const ARTWORKS = [
-  { id: 'abdullah', label: 'Abdullah Ibrahim', page: 'abdullah.html?v=piece-recovery-4', src: 'abdullah-ibrahim.jpg', width: 1049, height: 1400 },
-  { id: 'bra-hugh', label: 'Bra Hugh', page: 'bra-hugh.html?v=piece-recovery-4', src: 'bra-hugh.jpg', width: 1053, height: 1400 },
-  { id: 'mr-flavour', label: 'Mr Flavour', page: 'mr-flavour.html?v=piece-recovery-4', src: 'mr-flavour.jpg', width: 1049, height: 1400 },
-  { id: 'tems', label: 'Tems', page: 'tems.html?v=piece-recovery-4', src: 'tems.jpg', width: 1049, height: 1400 },
-  { id: 'thandiswa', label: 'Thandiswa Mazwai', page: 'thandiswa-mazwai.html?v=piece-recovery-4', src: 'thandiswa-mazwai.jpg', width: 1049, height: 1400 },
-  { id: 'tyla', label: 'Tyla', page: 'tyla.html?v=piece-recovery-4', src: 'tyla.jpg', width: 1049, height: 1400 },
+  { id: 'abdullah', label: 'Abdullah Ibrahim', page: 'abdullah.html?v=piece-smooth-1', src: 'abdullah-ibrahim.jpg', width: 1049, height: 1400 },
+  { id: 'bra-hugh', label: 'Bra Hugh', page: 'bra-hugh.html?v=piece-smooth-1', src: 'bra-hugh.jpg', width: 1053, height: 1400 },
+  { id: 'mr-flavour', label: 'Mr Flavour', page: 'mr-flavour.html?v=piece-smooth-1', src: 'mr-flavour.jpg', width: 1049, height: 1400 },
+  { id: 'tems', label: 'Tems', page: 'tems.html?v=piece-smooth-1', src: 'tems.jpg', width: 1049, height: 1400 },
+  { id: 'thandiswa', label: 'Thandiswa Mazwai', page: 'thandiswa-mazwai.html?v=piece-smooth-1', src: 'thandiswa-mazwai.jpg', width: 1049, height: 1400 },
+  { id: 'tyla', label: 'Tyla', page: 'tyla.html?v=piece-smooth-1', src: 'tyla.jpg', width: 1049, height: 1400 },
 ];
 const pageArtworkId = document.body.dataset.artwork || new URLSearchParams(window.location.search).get('artwork') || 'abdullah';
 let currentArtwork = ARTWORKS.find((item) => item.id === pageArtworkId) || ARTWORKS[0];
@@ -172,7 +172,7 @@ function selectArtwork(id) {
 
 function createPuzzle() {
   cancelDrag();
-  groups.forEach(stopFlick);
+  groups.forEach(stopGroupMotion);
   document.getElementById('winToast').classList.remove('show');
   clearInterval(timerId);
   startedAt = null;
@@ -288,8 +288,8 @@ function applyGroupPosition(group, x, y) {
 }
 
 function mergeGroups(a, b) {
-  stopFlick(a);
-  stopFlick(b);
+  stopGroupMotion(a);
+  stopGroupMotion(b);
   const target = b.locked ? b : a;
   const source = target === a ? b : a;
   source.members.forEach((id) => { target.members.add(id); groupByPiece.set(id, target); });
@@ -306,7 +306,7 @@ function mergeGroups(a, b) {
 
 function splitGroup(group) {
   if (!group || group.locked || group.members.size < 2) return;
-  stopFlick(group);
+  stopGroupMotion(group);
   const ids = [...group.members];
   ids.slice(1).forEach((id) => {
     const piece = pieces[id];
@@ -329,7 +329,7 @@ function separateUnlockedGroups() {
 
 function lockGroup(group) {
   if (group.locked) return;
-  stopFlick(group);
+  stopGroupMotion(group);
   group.locked = true;
   group.cluster.classList.add('locked');
   group.cluster.style.pointerEvents = 'none';
@@ -337,23 +337,66 @@ function lockGroup(group) {
   lockedCount += group.members.size;
 }
 
-function settle(group) {
-  let current = group;
-  let changed = true;
-  while (changed) {
-    changed = false;
-    const candidate = findSnap(current, Number(current.cluster.dataset.x || 0), Number(current.cluster.dataset.y || 0));
-    if (!candidate) break;
-    applyGroupPosition(current, candidate.x, candidate.y);
-    if (candidate.target) {
-      current = mergeGroups(current, candidate.target);
-      changed = true;
-    } else {
-      lockGroup(current);
-      changed = false;
-    }
+function stopSnap(group) {
+  if (group.snapFrame) cancelAnimationFrame(group.snapFrame);
+  group.snapFrame = 0;
+  group.settling = false;
+  group.cluster.classList.remove('settling');
+}
+
+function stopGroupMotion(group) {
+  stopFlick(group);
+  stopSnap(group);
+}
+
+function animateGroupTo(group, x, y, done) {
+  stopSnap(group);
+  const from = { x: group.x, y: group.y };
+  const distance = Math.hypot(x - from.x, y - from.y);
+  if (distance < 0.5) {
+    applyGroupPosition(group, x, y);
+    done();
+    return;
   }
-  updateProgress();
+  const duration = Math.min(150, Math.max(90, distance * 0.9));
+  const started = performance.now();
+  group.settling = true;
+  group.cluster.classList.add('settling');
+  const step = (now) => {
+    group.snapFrame = 0;
+    if (!groups.includes(group) || group.locked || !group.settling) return;
+    const progress = Math.min(1, (now - started) / duration);
+    const eased = progress * progress * (3 - 2 * progress);
+    applyGroupPosition(group, from.x + (x - from.x) * eased, from.y + (y - from.y) * eased);
+    if (progress < 1) {
+      group.snapFrame = requestAnimationFrame(step);
+      return;
+    }
+    stopSnap(group);
+    done();
+  };
+  group.snapFrame = requestAnimationFrame(step);
+}
+
+function settle(group) {
+  if (!group || group.locked || group.settling) return;
+  const candidate = findSnap(group, Number(group.cluster.dataset.x || 0), Number(group.cluster.dataset.y || 0));
+  if (!candidate) {
+    updateProgress();
+    return;
+  }
+  group.cluster.classList.remove('snap-hint');
+  animateGroupTo(group, candidate.x, candidate.y, () => {
+    if (!groups.includes(group) || group.locked) return;
+    applyGroupPosition(group, candidate.x, candidate.y);
+    if (candidate.target) {
+      const merged = mergeGroups(group, candidate.target);
+      settle(merged);
+    } else {
+      lockGroup(group);
+      updateProgress();
+    }
+  });
 }
 
 function bringToFront(group) { looseLayer.appendChild(group.cluster); }
@@ -366,6 +409,7 @@ function stopFlick(group) {
 
 function beginDrag(event) {
   if (drag) return;
+  if (groups.some((group) => group.settling)) return;
   if (event.button !== undefined && event.button !== 0) return;
   event.preventDefault();
   event.stopPropagation();
@@ -408,7 +452,9 @@ function applyDragPoint(clientX, clientY) {
 
 function moveDrag(event) {
   if (!drag) return;
-  drag.latest = { clientX: event.clientX, clientY: event.clientY };
+  const samples = event.getCoalescedEvents?.() || [event];
+  const sample = samples[samples.length - 1];
+  drag.latest = { clientX: sample.clientX, clientY: sample.clientY };
   if (drag.frame) return;
   drag.frame = requestAnimationFrame(() => {
     drag.frame = 0;
@@ -480,7 +526,7 @@ function endDrag(event) {
 
 function shuffle(includeLocked = false) {
   cancelDrag();
-  groups.forEach(stopFlick);
+  groups.forEach(stopGroupMotion);
   const slotCols = trayX > 0 ? COLS + 2 : COLS;
   const slotRows = trayY > 0 ? ROWS + 3 : ROWS;
   const slotWidth = WORLD_WIDTH + trayX * 2;
@@ -516,7 +562,7 @@ function shuffle(includeLocked = false) {
 
 function resizeBoard() {
   cancelDrag();
-  groups.forEach(stopFlick);
+  groups.forEach(stopGroupMotion);
   const shell = document.querySelector('.game-shell');
   const viewport = window.visualViewport;
   const viewportWidth = viewport?.width || window.innerWidth;
