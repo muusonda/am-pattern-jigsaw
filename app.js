@@ -4,12 +4,12 @@ const COLS = 8;
 const ROWS = 12;
 const TOTAL = COLS * ROWS;
 const ARTWORKS = [
-  { id: 'abdullah', label: 'Abdullah Ibrahim', page: 'abdullah.html?v=artwork-pages-3', src: 'abdullah-ibrahim.jpg', width: 1049, height: 1400 },
-  { id: 'bra-hugh', label: 'Bra Hugh', page: 'bra-hugh.html?v=artwork-pages-3', src: 'bra-hugh.jpg', width: 1053, height: 1400 },
-  { id: 'mr-flavour', label: 'Mr Flavour', page: 'mr-flavour.html?v=artwork-pages-3', src: 'mr-flavour.jpg', width: 1049, height: 1400 },
-  { id: 'tems', label: 'Tems', page: 'tems.html?v=artwork-pages-3', src: 'tems.jpg', width: 1049, height: 1400 },
-  { id: 'thandiswa', label: 'Thandiswa Mazwai', page: 'thandiswa-mazwai.html?v=artwork-pages-3', src: 'thandiswa-mazwai.jpg', width: 1049, height: 1400 },
-  { id: 'tyla', label: 'Tyla', page: 'tyla.html?v=artwork-pages-3', src: 'tyla.jpg', width: 1049, height: 1400 },
+  { id: 'abdullah', label: 'Abdullah Ibrahim', page: 'abdullah.html?v=piece-recovery-4', src: 'abdullah-ibrahim.jpg', width: 1049, height: 1400 },
+  { id: 'bra-hugh', label: 'Bra Hugh', page: 'bra-hugh.html?v=piece-recovery-4', src: 'bra-hugh.jpg', width: 1053, height: 1400 },
+  { id: 'mr-flavour', label: 'Mr Flavour', page: 'mr-flavour.html?v=piece-recovery-4', src: 'mr-flavour.jpg', width: 1049, height: 1400 },
+  { id: 'tems', label: 'Tems', page: 'tems.html?v=piece-recovery-4', src: 'tems.jpg', width: 1049, height: 1400 },
+  { id: 'thandiswa', label: 'Thandiswa Mazwai', page: 'thandiswa-mazwai.html?v=piece-recovery-4', src: 'thandiswa-mazwai.jpg', width: 1049, height: 1400 },
+  { id: 'tyla', label: 'Tyla', page: 'tyla.html?v=piece-recovery-4', src: 'tyla.jpg', width: 1049, height: 1400 },
 ];
 const pageArtworkId = document.body.dataset.artwork || new URLSearchParams(window.location.search).get('artwork') || 'abdullah';
 let currentArtwork = ARTWORKS.find((item) => item.id === pageArtworkId) || ARTWORKS[0];
@@ -21,6 +21,8 @@ let CELL_H = WORLD_HEIGHT / ROWS;
 const SNAP = 34;
 
 let svg;
+let lockedLayer;
+let looseLayer;
 let pieces = [];
 let groups = [];
 let groupByPiece = new Map();
@@ -75,7 +77,7 @@ function setTransform(el, x, y) { el.dataset.x = x; el.dataset.y = y; el.setAttr
 function groupOffset(group) { return { x: Number(group.cluster.dataset.x || 0), y: Number(group.cluster.dataset.y || 0) }; }
 
 function workspaceMargins() {
-  return window.innerWidth < 700 ? { x: 0, y: 260 } : { x: 260, y: 0 };
+  return (window.visualViewport?.width || window.innerWidth) < 700 ? { x: 0, y: 260 } : { x: 260, y: 0 };
 }
 
 function workspaceViewBox() {
@@ -133,16 +135,14 @@ function shuffleArray(items) {
 // Keep the whole cluster inside the SVG's visible viewBox, including the
 // responsive piece tray around the puzzle area.
 function clampGroupPosition(group, x, y) {
-  // Keep the piece body flush with the workspace edge. Including tab bounds
-  // here left a visible gap when a piece was dragged to an outer edge.
-  const bounds = groupCoreBounds(group);
-  const minX = -trayX - bounds.minX;
-  const maxX = WORLD_WIDTH + trayX - bounds.maxX;
-  const minY = -trayY - bounds.minY;
-  const maxY = WORLD_HEIGHT + trayY - bounds.maxY;
+  const bounds = groupBounds(group);
+  const minX = -trayX + 4 - bounds.minX;
+  const maxX = WORLD_WIDTH + trayX - 4 - bounds.maxX;
+  const minY = -trayY + 4 - bounds.minY;
+  const maxY = WORLD_HEIGHT + trayY - 4 - bounds.maxY;
   return {
-    x: Math.min(maxX, Math.max(minX, x)),
-    y: Math.min(maxY, Math.max(minY, y)),
+    x: minX > maxX ? (minX + maxX) / 2 : Math.min(maxX, Math.max(minX, x)),
+    y: minY > maxY ? (minY + maxY) / 2 : Math.min(maxY, Math.max(minY, y)),
   };
 }
 
@@ -171,6 +171,9 @@ function selectArtwork(id) {
 }
 
 function createPuzzle() {
+  cancelDrag();
+  groups.forEach(stopFlick);
+  document.getElementById('winToast').classList.remove('show');
   clearInterval(timerId);
   startedAt = null;
   lockedCount = 0;
@@ -187,6 +190,12 @@ function createPuzzle() {
 
   const ghost = svgEl('image', { href: currentArtwork.src, x: 0, y: 0, width: WORLD_WIDTH, height: WORLD_HEIGHT, preserveAspectRatio: 'none', class: 'ghost-image' });
   svg.appendChild(ghost);
+  const slotsLayer = svgEl('g', { class: 'slots-layer' });
+  lockedLayer = svgEl('g', { class: 'locked-layer' });
+  looseLayer = svgEl('g', { class: 'loose-layer' });
+  svg.appendChild(slotsLayer);
+  svg.appendChild(lockedLayer);
+  svg.appendChild(looseLayer);
 
   for (let row = 0; row < ROWS; row += 1) {
     for (let col = 0; col < COLS; col += 1) {
@@ -198,7 +207,7 @@ function createPuzzle() {
       defs.appendChild(clip);
 
       const slot = svgEl('path', { d: path, transform: `translate(${origin.x} ${origin.y})`, class: 'slot' });
-      svg.appendChild(slot);
+      slotsLayer.appendChild(slot);
 
       const cluster = svgEl('g', { class: 'cluster' });
       const piece = svgEl('g', { class: 'piece', 'data-id': id, 'data-row': row, 'data-col': col, transform: `translate(${origin.x} ${origin.y})` });
@@ -206,7 +215,7 @@ function createPuzzle() {
       piece.appendChild(image);
       piece.appendChild(svgEl('path', { d: path, class: 'piece-outline' }));
       cluster.appendChild(piece);
-      svg.appendChild(cluster);
+      looseLayer.appendChild(cluster);
 
       const group = { id: `group-${id}`, members: new Set([id]), cluster, x: 0, y: 0, locked: false };
       setTransform(cluster, 0, 0);
@@ -279,6 +288,8 @@ function applyGroupPosition(group, x, y) {
 }
 
 function mergeGroups(a, b) {
+  stopFlick(a);
+  stopFlick(b);
   const target = b.locked ? b : a;
   const source = target === a ? b : a;
   source.members.forEach((id) => { target.members.add(id); groupByPiece.set(id, target); });
@@ -295,13 +306,14 @@ function mergeGroups(a, b) {
 
 function splitGroup(group) {
   if (!group || group.locked || group.members.size < 2) return;
+  stopFlick(group);
   const ids = [...group.members];
   ids.slice(1).forEach((id) => {
     const piece = pieces[id];
     if (!piece) return;
     const cluster = svgEl('g', { class: 'cluster' });
     cluster.appendChild(piece.element);
-    svg.appendChild(cluster);
+    looseLayer.appendChild(cluster);
     const nextGroup = { id: `group-${id}-${Date.now()}`, members: new Set([id]), cluster, x: group.x, y: group.y, locked: false };
     setTransform(cluster, group.x, group.y);
     groups.push(nextGroup);
@@ -317,9 +329,11 @@ function separateUnlockedGroups() {
 
 function lockGroup(group) {
   if (group.locked) return;
+  stopFlick(group);
   group.locked = true;
   group.cluster.classList.add('locked');
   group.cluster.style.pointerEvents = 'none';
+  lockedLayer.appendChild(group.cluster);
   lockedCount += group.members.size;
 }
 
@@ -342,20 +356,28 @@ function settle(group) {
   updateProgress();
 }
 
-function bringToFront(group) { svg.appendChild(group.cluster); }
+function bringToFront(group) { looseLayer.appendChild(group.cluster); }
+
+function stopFlick(group) {
+  if (group.flickFrame) cancelAnimationFrame(group.flickFrame);
+  group.flickFrame = 0;
+  group.cluster.classList.remove('flicking');
+}
 
 function beginDrag(event) {
+  if (drag) return;
   if (event.button !== undefined && event.button !== 0) return;
   event.preventDefault();
   event.stopPropagation();
   const piece = pieces[Number(event.currentTarget.dataset.id)];
   const group = groupByPiece.get(piece.id);
   if (!group || group.locked) return;
+  stopFlick(group);
   startTimer();
   bringToFront(group);
   const point = svgPoint(event);
   const offset = groupOffset(group);
-  drag = { group, dx: point.x - offset.x, dy: point.y - offset.y, inverseCTM: svg.getScreenCTM().inverse(), frame: 0, latest: null, lastPoint: null, lastTime: performance.now(), vx: 0, vy: 0 };
+  drag = { group, element: event.currentTarget, pointerId: event.pointerId, dx: point.x - offset.x, dy: point.y - offset.y, inverseCTM: svg.getScreenCTM().inverse(), frame: 0, latest: null, lastPoint: null, lastTime: performance.now(), vx: 0, vy: 0 };
   group.cluster.classList.add('dragging');
   event.currentTarget.setPointerCapture(event.pointerId);
   event.currentTarget.addEventListener('pointermove', moveDrag);
@@ -395,10 +417,12 @@ function moveDrag(event) {
 }
 
 function flickGroup(group, vx, vy) {
+  stopFlick(group);
   let last = performance.now();
   group.cluster.classList.add('flicking');
   const step = (now) => {
-    if (group.locked) return;
+    group.flickFrame = 0;
+    if (group.locked || !groups.includes(group)) { stopFlick(group); return; }
     const dt = Math.min(0.04, Math.max(0.008, (now - last) / 1000));
     last = now;
     const next = clampGroupPosition(group, group.x + vx * dt, group.y + vy * dt);
@@ -420,13 +444,27 @@ function flickGroup(group, vx, vy) {
       settle(group);
       return;
     }
-    requestAnimationFrame(step);
+    group.flickFrame = requestAnimationFrame(step);
   };
-  requestAnimationFrame(step);
+  group.flickFrame = requestAnimationFrame(step);
+}
+
+function cancelDrag() {
+  if (!drag) return;
+  const current = drag;
+  drag = null;
+  if (current.frame) cancelAnimationFrame(current.frame);
+  current.element.removeEventListener('pointermove', moveDrag);
+  current.element.removeEventListener('pointerup', endDrag);
+  current.element.removeEventListener('pointercancel', endDrag);
+  if (current.element.hasPointerCapture(current.pointerId)) current.element.releasePointerCapture(current.pointerId);
+  current.group.cluster.classList.remove('dragging', 'snap-hint');
 }
 
 function endDrag(event) {
   if (!drag) return;
+  if (event.pointerId !== drag.pointerId) return;
+  if (event.type === 'pointercancel') { cancelDrag(); return; }
   if (drag.frame) cancelAnimationFrame(drag.frame);
   drag.frame = 0;
   applyDragPoint(event.clientX, event.clientY);
@@ -434,14 +472,15 @@ function endDrag(event) {
   const vx = drag.vx;
   const vy = drag.vy;
   group.cluster.classList.remove('dragging', 'snap-hint');
-  event.currentTarget.removeEventListener('pointermove', moveDrag);
-  drag = null;
+  cancelDrag();
   const ready = findSnap(group, group.x, group.y);
   if (ready || Math.hypot(vx, vy) < 260) settle(group);
   else flickGroup(group, vx, vy);
 }
 
 function shuffle(includeLocked = false) {
+  cancelDrag();
+  groups.forEach(stopFlick);
   const slotCols = trayX > 0 ? COLS + 2 : COLS;
   const slotRows = trayY > 0 ? ROWS + 3 : ROWS;
   const slotWidth = WORLD_WIDTH + trayX * 2;
@@ -465,6 +504,7 @@ function shuffle(includeLocked = false) {
       if (!best || overlap < best.overlap) best = { ...position, rect, overlap };
     });
     applyGroupPosition(group, best.x, best.y);
+    if (!group.locked) bringToFront(group);
     placed.push(best.rect);
     const chosen = slots.findIndex((slot) => {
       const position = clampGroupPosition(group, slot.x - anchor.minX, slot.y - anchor.minY);
@@ -475,6 +515,16 @@ function shuffle(includeLocked = false) {
 }
 
 function resizeBoard() {
+  cancelDrag();
+  groups.forEach(stopFlick);
+  const shell = document.querySelector('.game-shell');
+  const viewport = window.visualViewport;
+  const viewportWidth = viewport?.width || window.innerWidth;
+  const viewportHeight = viewport?.height || window.innerHeight;
+  shell.style.width = `${viewportWidth}px`;
+  shell.style.height = `${viewportHeight}px`;
+  shell.style.left = `${viewport?.offsetLeft || 0}px`;
+  shell.style.top = `${viewport?.offsetTop || 0}px`;
   const nextMargins = workspaceMargins();
   const marginsChanged = nextMargins.x !== trayX || nextMargins.y !== trayY;
   trayX = nextMargins.x;
@@ -482,13 +532,15 @@ function resizeBoard() {
   const viewWidth = WORLD_WIDTH + trayX * 2;
   const viewHeight = WORLD_HEIGHT + trayY * 2;
   if (svg) svg.setAttribute('viewBox', workspaceViewBox());
-  const maxWidth = Math.min(window.innerWidth * 0.94, 1100);
-  const maxHeight = window.innerHeight * 0.92;
+  const padding = getComputedStyle(shell);
+  const maxWidth = Math.max(1, Math.min(1100, viewportWidth - parseFloat(padding.paddingLeft) - parseFloat(padding.paddingRight)));
+  const maxHeight = Math.max(1, viewportHeight - parseFloat(padding.paddingTop) - parseFloat(padding.paddingBottom));
   const width = Math.min(maxWidth, maxHeight * viewWidth / viewHeight);
   board.style.width = `${width}px`;
   board.style.height = `${width * viewHeight / viewWidth}px`;
   if (marginsChanged && groups.length) {
     groups.forEach((group) => {
+      if (group.locked) return;
       const position = clampGroupPosition(group, group.x, group.y);
       applyGroupPosition(group, position.x, position.y);
     });
@@ -505,6 +557,8 @@ document.getElementById('imageModal').onclick = (event) => { if (event.target.id
 document.getElementById('ghostBtn').onclick = () => board.classList.toggle('ghost-on');
 document.getElementById('fullscreenBtn').onclick = () => { if (!document.fullscreenElement) document.querySelector('.game-shell').requestFullscreen?.(); else document.exitFullscreen?.(); };
 window.addEventListener('resize', resizeBoard);
+window.visualViewport?.addEventListener('resize', resizeBoard);
+window.visualViewport?.addEventListener('scroll', resizeBoard);
 document.addEventListener('selectstart', (event) => event.preventDefault());
 document.addEventListener('dragstart', (event) => event.preventDefault());
 document.addEventListener('contextmenu', (event) => event.preventDefault());
