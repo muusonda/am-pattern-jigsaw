@@ -4,12 +4,12 @@ const COLS = 8;
 const ROWS = 12;
 const TOTAL = COLS * ROWS;
 const ARTWORKS = [
-  { id: 'abdullah', label: 'Abdullah Ibrahim', page: 'abdullah.html?v=piece-smooth-1', src: 'abdullah-ibrahim.jpg', width: 1049, height: 1400 },
-  { id: 'bra-hugh', label: 'Bra Hugh', page: 'bra-hugh.html?v=piece-smooth-1', src: 'bra-hugh.jpg', width: 1053, height: 1400 },
-  { id: 'mr-flavour', label: 'Mr Flavour', page: 'mr-flavour.html?v=piece-smooth-1', src: 'mr-flavour.jpg', width: 1049, height: 1400 },
-  { id: 'tems', label: 'Tems', page: 'tems.html?v=piece-smooth-1', src: 'tems.jpg', width: 1049, height: 1400 },
-  { id: 'thandiswa', label: 'Thandiswa Mazwai', page: 'thandiswa-mazwai.html?v=piece-smooth-1', src: 'thandiswa-mazwai.jpg', width: 1049, height: 1400 },
-  { id: 'tyla', label: 'Tyla', page: 'tyla.html?v=piece-smooth-1', src: 'tyla.jpg', width: 1049, height: 1400 },
+  { id: 'abdullah', label: 'Abdullah Ibrahim', page: 'abdullah.html?v=piece-mobile-1', src: 'abdullah-ibrahim.jpg', compactSrc: 'abdullah-ibrahim-compact.jpg', width: 1049, height: 1400 },
+  { id: 'bra-hugh', label: 'Bra Hugh', page: 'bra-hugh.html?v=piece-mobile-1', src: 'bra-hugh.jpg', compactSrc: 'bra-hugh-compact.jpg', width: 1053, height: 1400 },
+  { id: 'mr-flavour', label: 'Mr Flavour', page: 'mr-flavour.html?v=piece-mobile-1', src: 'mr-flavour.jpg', compactSrc: 'mr-flavour-compact.jpg', width: 1049, height: 1400 },
+  { id: 'tems', label: 'Tems', page: 'tems.html?v=piece-mobile-1', src: 'tems.jpg', compactSrc: 'tems-compact.jpg', width: 1049, height: 1400 },
+  { id: 'thandiswa', label: 'Thandiswa Mazwai', page: 'thandiswa-mazwai.html?v=piece-mobile-1', src: 'thandiswa-mazwai.jpg', compactSrc: 'thandiswa-mazwai-compact.jpg', width: 1049, height: 1400 },
+  { id: 'tyla', label: 'Tyla', page: 'tyla.html?v=piece-mobile-1', src: 'tyla.jpg', compactSrc: 'tyla-compact.jpg', width: 1049, height: 1400 },
 ];
 const pageArtworkId = document.body.dataset.artwork || new URLSearchParams(window.location.search).get('artwork') || 'abdullah';
 let currentArtwork = ARTWORKS.find((item) => item.id === pageArtworkId) || ARTWORKS[0];
@@ -84,6 +84,12 @@ function workspaceViewBox() {
   return `${-trayX} ${-trayY} ${WORLD_WIDTH + trayX * 2} ${WORLD_HEIGHT + trayY * 2}`;
 }
 
+function renderArtworkSource() {
+  const compact = window.matchMedia?.('(pointer: coarse)').matches ||
+    window.innerWidth <= 900 || navigator.maxTouchPoints > 1;
+  return compact ? currentArtwork.compactSrc : currentArtwork.src;
+}
+
 // Return the full local footprint of a cluster, including each piece's tabs.
 // Keeping this derived from the member origins means it also works after pieces
 // have been merged into a larger connected group.
@@ -134,8 +140,7 @@ function shuffleArray(items) {
 
 // Keep the whole cluster inside the SVG's visible viewBox, including the
 // responsive piece tray around the puzzle area.
-function clampGroupPosition(group, x, y) {
-  const bounds = groupBounds(group);
+function clampGroupPosition(group, x, y, bounds = groupBounds(group)) {
   const minX = -trayX + 4 - bounds.minX;
   const maxX = WORLD_WIDTH + trayX - 4 - bounds.maxX;
   const minY = -trayY + 4 - bounds.minY;
@@ -185,10 +190,11 @@ function createPuzzle() {
   ({ x: trayX, y: trayY } = workspaceMargins());
   board.innerHTML = '';
   svg = svgEl('svg', { id: 'puzzleSvg', viewBox: workspaceViewBox(), preserveAspectRatio: 'none' });
+  const renderSrc = renderArtworkSource();
   const defs = svgEl('defs');
   svg.appendChild(defs);
 
-  const ghost = svgEl('image', { href: currentArtwork.src, x: 0, y: 0, width: WORLD_WIDTH, height: WORLD_HEIGHT, preserveAspectRatio: 'none', class: 'ghost-image' });
+  const ghost = svgEl('image', { href: renderSrc, x: 0, y: 0, width: WORLD_WIDTH, height: WORLD_HEIGHT, preserveAspectRatio: 'none', decoding: 'async', class: 'ghost-image' });
   svg.appendChild(ghost);
   const slotsLayer = svgEl('g', { class: 'slots-layer' });
   lockedLayer = svgEl('g', { class: 'locked-layer' });
@@ -211,7 +217,7 @@ function createPuzzle() {
 
       const cluster = svgEl('g', { class: 'cluster' });
       const piece = svgEl('g', { class: 'piece', 'data-id': id, 'data-row': row, 'data-col': col, transform: `translate(${origin.x} ${origin.y})` });
-      const image = svgEl('image', { href: currentArtwork.src, x: -origin.x, y: -origin.y, width: WORLD_WIDTH, height: WORLD_HEIGHT, preserveAspectRatio: 'none', 'clip-path': `url(#clip-${id})` });
+      const image = svgEl('image', { href: renderSrc, x: -origin.x, y: -origin.y, width: WORLD_WIDTH, height: WORLD_HEIGHT, preserveAspectRatio: 'none', decoding: 'async', 'clip-path': `url(#clip-${id})` });
       piece.appendChild(image);
       piece.appendChild(svgEl('path', { d: path, class: 'piece-outline' }));
       cluster.appendChild(piece);
@@ -274,6 +280,7 @@ function findSnap(group, x, y) {
   if (Math.hypot(x, y) <= SNAP) return { x: 0, y: 0, target: null, lock: true };
   let best = null;
   neighborsOf(group).forEach((neighbor) => {
+    if (neighbor.settling || neighbor.flickFrame || drag?.group === neighbor) return;
     const nx = Number(neighbor.cluster.dataset.x || 0), ny = Number(neighbor.cluster.dataset.y || 0);
     const distance = Math.hypot(x - nx, y - ny);
     if (distance <= SNAP && (!best || distance < best.distance)) best = { x: nx, y: ny, target: neighbor, lock: neighbor.locked, distance };
@@ -353,7 +360,7 @@ function animateGroupTo(group, x, y, done) {
   stopSnap(group);
   const from = { x: group.x, y: group.y };
   const distance = Math.hypot(x - from.x, y - from.y);
-  if (distance < 0.5) {
+  if (distance < 0.5 || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
     applyGroupPosition(group, x, y);
     done();
     return;
@@ -390,8 +397,16 @@ function settle(group) {
     if (!groups.includes(group) || group.locked) return;
     applyGroupPosition(group, candidate.x, candidate.y);
     if (candidate.target) {
+      // The target may have been picked up or merged during this short animation.
+      if (!groups.includes(candidate.target) || drag?.group === candidate.target ||
+          candidate.target.flickFrame || candidate.target.settling ||
+          Math.hypot(candidate.target.x - candidate.x, candidate.target.y - candidate.y) > 0.5) {
+        settle(group);
+        return;
+      }
       const merged = mergeGroups(group, candidate.target);
       settle(merged);
+      updateProgress();
     } else {
       lockGroup(group);
       updateProgress();
@@ -409,41 +424,40 @@ function stopFlick(group) {
 
 function beginDrag(event) {
   if (drag) return;
-  if (groups.some((group) => group.settling)) return;
   if (event.button !== undefined && event.button !== 0) return;
   event.preventDefault();
   event.stopPropagation();
   const piece = pieces[Number(event.currentTarget.dataset.id)];
   const group = groupByPiece.get(piece.id);
   if (!group || group.locked) return;
-  stopFlick(group);
+  stopGroupMotion(group);
   startTimer();
   bringToFront(group);
   const point = svgPoint(event);
   const offset = groupOffset(group);
-  drag = { group, element: event.currentTarget, pointerId: event.pointerId, dx: point.x - offset.x, dy: point.y - offset.y, inverseCTM: svg.getScreenCTM().inverse(), frame: 0, latest: null, lastPoint: null, lastTime: performance.now(), vx: 0, vy: 0 };
+  drag = { group, element: event.currentTarget, pointerId: event.pointerId, dx: point.x - offset.x, dy: point.y - offset.y, inverseCTM: svg.getScreenCTM().inverse(), bounds: groupBounds(group), frame: 0, latest: null, lastPoint: offset, samples: [{ x: offset.x, y: offset.y, time: event.timeStamp }], vx: 0, vy: 0 };
   group.cluster.classList.add('dragging');
   event.currentTarget.setPointerCapture(event.pointerId);
   event.currentTarget.addEventListener('pointermove', moveDrag);
   event.currentTarget.addEventListener('pointerup', endDrag, { once: true });
   event.currentTarget.addEventListener('pointercancel', endDrag, { once: true });
+  event.currentTarget.addEventListener('lostpointercapture', endDrag, { once: true });
 }
 
-function applyDragPoint(clientX, clientY) {
+function applyDragPoint(clientX, clientY, timeStamp) {
   if (!drag) return;
   const point = svgPoint({ clientX, clientY }, drag.inverseCTM);
   const rawX = point.x - drag.dx, rawY = point.y - drag.dy;
-  const { x, y } = clampGroupPosition(drag.group, rawX, rawY);
-  const now = performance.now();
-  if (drag.lastPoint) {
-    const dt = Math.max(0.008, (now - drag.lastTime) / 1000);
-    const instantVx = (x - drag.lastPoint.x) / dt;
-    const instantVy = (y - drag.lastPoint.y) / dt;
-    drag.vx = drag.vx * 0.65 + instantVx * 0.35;
-    drag.vy = drag.vy * 0.65 + instantVy * 0.35;
-  }
+  const { x, y } = clampGroupPosition(drag.group, rawX, rawY, drag.bounds);
+  // Measure the recent pointer trajectory, independent of rendering frequency.
+  const now = timeStamp ?? performance.now();
+  drag.samples.push({ x, y, time: now });
+  drag.samples = drag.samples.filter((sample) => now - sample.time <= 90);
+  const first = drag.samples[0];
+  const dt = (now - first.time) / 1000;
+  drag.vx = dt >= 0.008 ? (x - first.x) / dt : 0;
+  drag.vy = dt >= 0.008 ? (y - first.y) / dt : 0;
   drag.lastPoint = { x, y };
-  drag.lastTime = now;
   applyGroupPosition(drag.group, x, y);
   const ready = findSnap(drag.group, x, y);
   drag.group.cluster.classList.toggle('snap-hint', Boolean(ready));
@@ -451,29 +465,36 @@ function applyDragPoint(clientX, clientY) {
 }
 
 function moveDrag(event) {
-  if (!drag) return;
+  if (!drag || event.pointerId !== drag.pointerId) return;
   const samples = event.getCoalescedEvents?.() || [event];
-  const sample = samples[samples.length - 1];
-  drag.latest = { clientX: sample.clientX, clientY: sample.clientY };
+  const sample = samples[samples.length - 1] || event;
+  drag.latest = { clientX: sample.clientX, clientY: sample.clientY, timeStamp: sample.timeStamp };
   if (drag.frame) return;
   drag.frame = requestAnimationFrame(() => {
     drag.frame = 0;
-    if (drag.latest) applyDragPoint(drag.latest.clientX, drag.latest.clientY);
+    if (drag.latest) applyDragPoint(drag.latest.clientX, drag.latest.clientY, drag.latest.timeStamp);
   });
 }
 
 function flickGroup(group, vx, vy) {
-  stopFlick(group);
+  stopGroupMotion(group);
+  const speedLimit = 2200;
+  const scale = Math.min(1, speedLimit / Math.hypot(vx, vy));
+  vx *= scale;
+  vy *= scale;
+  const bounds = groupBounds(group);
   let last = performance.now();
   group.cluster.classList.add('flicking');
   const step = (now) => {
     group.flickFrame = 0;
     if (group.locked || !groups.includes(group)) { stopFlick(group); return; }
-    const dt = Math.min(0.04, Math.max(0.008, (now - last) / 1000));
+    const dt = Math.min(0.04, Math.max(0, (now - last) / 1000));
     last = now;
-    const next = clampGroupPosition(group, group.x + vx * dt, group.y + vy * dt);
-    if (next.x !== group.x + vx * dt) vx *= -0.35;
-    if (next.y !== group.y + vy * dt) vy *= -0.35;
+    const decay = Math.exp(-3.35 * dt);
+    const travel = (1 - decay) / 3.35;
+    const next = clampGroupPosition(group, group.x + vx * travel, group.y + vy * travel, bounds);
+    if (next.x !== group.x + vx * travel) vx *= -0.2;
+    if (next.y !== group.y + vy * travel) vy *= -0.2;
     applyGroupPosition(group, next.x, next.y);
     const ready = findSnap(group, next.x, next.y);
     const speed = Math.hypot(vx, vy);
@@ -482,7 +503,6 @@ function flickGroup(group, vx, vy) {
       settle(group);
       return;
     }
-    const decay = Math.pow(0.035, dt);
     vx *= decay;
     vy *= decay;
     if (Math.hypot(vx, vy) < 24) {
@@ -503,6 +523,7 @@ function cancelDrag() {
   current.element.removeEventListener('pointermove', moveDrag);
   current.element.removeEventListener('pointerup', endDrag);
   current.element.removeEventListener('pointercancel', endDrag);
+  current.element.removeEventListener('lostpointercapture', endDrag);
   if (current.element.hasPointerCapture(current.pointerId)) current.element.releasePointerCapture(current.pointerId);
   current.group.cluster.classList.remove('dragging', 'snap-hint');
 }
@@ -510,17 +531,18 @@ function cancelDrag() {
 function endDrag(event) {
   if (!drag) return;
   if (event.pointerId !== drag.pointerId) return;
-  if (event.type === 'pointercancel') { cancelDrag(); return; }
+  if (event.type === 'pointercancel' || event.type === 'lostpointercapture') { cancelDrag(); return; }
   if (drag.frame) cancelAnimationFrame(drag.frame);
   drag.frame = 0;
-  applyDragPoint(event.clientX, event.clientY);
+  if (drag.latest) applyDragPoint(drag.latest.clientX, drag.latest.clientY, drag.latest.timeStamp);
+  applyDragPoint(event.clientX, event.clientY, event.timeStamp);
   const group = drag.group;
   const vx = drag.vx;
   const vy = drag.vy;
   group.cluster.classList.remove('dragging', 'snap-hint');
   cancelDrag();
   const ready = findSnap(group, group.x, group.y);
-  if (ready || Math.hypot(vx, vy) < 260) settle(group);
+  if (ready || Math.hypot(vx, vy) < 260 || window.matchMedia('(prefers-reduced-motion: reduce)').matches) settle(group);
   else flickGroup(group, vx, vy);
 }
 

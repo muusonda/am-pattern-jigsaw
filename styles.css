@@ -9,7 +9,16 @@
 .cluster.locked .piece,.cluster.locked image{pointer-events:none}
 
 /* Keep drag and flick frames light, then ease the short final snap. */
-.cluster{will-change:transform}
+.cluster.dragging,.cluster.flicking,.cluster.settling{will-change:transform}
 .cluster.dragging{opacity:.97}
 .cluster.flicking{opacity:.98;filter:none}
-.cluster.settling{cursor:default;pointer-events:none;opacity:.98}
+.cluster.settling{opacity:.98}
+.board{filter:none;box-shadow:0 24px 70px rgba(0,0,0,.42)}
+.cluster.locked,.cluster.snap-hint .piece-outline{filter:none}
+
+/* Avoid a separate isolated paint context for every piece on touch devices. */
+.cluster{isolation:auto}
+@media (pointer: coarse){
+  .board:after{display:none}
+  .floating-controls,.round-control{backdrop-filter:none;-webkit-backdrop-filter:none}
+}
